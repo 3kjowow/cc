@@ -94,7 +94,7 @@
 			background: linear-gradient(90deg, #dfe6ef, #f2f5fa);
 			border-radius: inherit;
 			transform-origin: center center;
-			animation: countdown 20s linear forwards;
+			animation: countdown 35s linear forwards;
 		}
 		@keyframes countdown {
 			0% { transform: scaleX(1); }
@@ -124,7 +124,7 @@ A black pendant lay beside the window.
 He followed the footprints into the forest.</p>
 			<div class="choice-wrap">
 				<div class="choices"><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
-				<div class="timer" aria-label="30 second timer">
+				<div class="timer" aria-label="35 second timer">
 					<span class="timer-fill"></span>
 				</div>
 			</div>
@@ -137,7 +137,7 @@ He followed the footprints into the forest.</p>
 		let currentStage = 1;
 		let autoDecisionTimer = null;
 		let subtitleReadTimer = null;
-		const AUTO_DECISION_DELAY = 20000;
+		const AUTO_DECISION_DELAY = 35000;
 
 		const sceneMap = {
 			2: { good: '2A_2K_20260927155652.jpg', bad: '2B_2K_20260927155647.jpg' },
