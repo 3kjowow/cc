@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Choose One</title>
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			position: relative;
+			margin: 0;
+			min-height: 100vh;
+			display: block;
+			padding: 0;
+			background: #000;
+			color: #fff;
+			font-family: Arial, sans-serif;
+		}
+		#bg {
+			position: fixed;
+			inset: 0;
+			background: url('INTRODUCTION_2K_20260927155627.jpg') center center / cover no-repeat;
+			z-index: 0;
+			pointer-events: none;
+			animation: breathe 8s ease-in-out infinite alternate;
+		}
+		@keyframes breathe {
+			0% { transform: scale(1.02); filter: brightness(0.96) saturate(0.98); }
+			50% { transform: scale(1.06); filter: brightness(1) saturate(1.02); }
+			100% { transform: scale(1.02); filter: brightness(0.96) saturate(0.98); }
+		}
+		.player {
+			position: relative;
+			z-index: 1;
+			width: 100%;
+			height: 100vh;
+			background: transparent;
+			border: none;
+			box-shadow: none;
+		}
+		.video {
+			position: relative;
+			width: 100%;
+			height: 100vh;
+			overflow: hidden;
+			background: transparent;
+		}
+		.video:before { content: ''; position: absolute; inset: 0 0 auto; height: 16%; background: transparent; }
+		.wall { position: absolute; inset: 17% 0 32%; background: transparent; opacity: 1; }
+		.table { position: absolute; left: 15%; right: 15%; bottom: 2%; height: 34%; border-radius: 50%; background: transparent; opacity: 1; }
+		.caption { position: absolute; z-index: 2; top: 10%; left: 50%; transform: translateX(-50%); width: 90%; margin: 0; text-align: center; font-size: clamp(17px, 2.2vw, 23px); line-height: 1.4; font-weight: 700; text-shadow: 0 2px 8px #17121c, 0 0 12px #17121c; }
+		.subtitle {
+			position: absolute;
+			z-index: 2;
+			top: 75%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: min(2000px, 96vw);
+			margin: 0;
+			padding: 0;
+			background: transparent;
+			backdrop-filter: none;
+			border: none;
+			border-radius: 0;
+			text-align: center;
+			font-size: clamp(24px, 2.8vw, 40px);
+			line-height: 1.5;
+			letter-spacing: 0.02em;
+			font-weight: 700;
+			white-space: normal;
+			text-wrap: balance;
+			color: rgba(255,255,255,0.96);
+			text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 18px rgba(0,0,0,0.6);
+			box-shadow: none;
+		}
+		.choice-wrap { position: absolute; z-index: 3; left: 9%; right: 9%; bottom: 8%; }
+		.choices { display: flex; justify-content: space-between; gap: 18%; }
+		button { position: relative; z-index: 2; flex: 1; min-height: 40px; border: 1px solid #c6b98e; border-radius: 5px; color: white; background: #252431ed; font: 700 15px Arial,sans-serif; cursor: pointer; }
+		button:hover, button:focus-visible, button.chosen { background: #716b82; outline: 2px solid #eee0a6; }
+		.timer {
+			position: relative;
+			width: 100%;
+			height: 4px;
+			margin-top: 12px;
+			background: rgba(255,255,255,0.16);
+			border-radius: 999px;
+			overflow: hidden;
+			box-shadow: 0 0 10px rgba(255,255,255,0.1);
+		}
+		.timer-fill {
+			display: block;
+			height: 100%;
+			width: 100%;
+			background: linear-gradient(90deg, #dfe6ef, #f2f5fa);
+			border-radius: inherit;
+			transform-origin: center center;
+			animation: countdown 20s linear forwards;
+		}
+		@keyframes countdown {
+			0% { transform: scaleX(1); }
+			50% { transform: scaleX(0.45); }
+			100% { transform: scaleX(0); }
+		}
+		.seek { height: 4px; margin: 5px 11% 0; background: #292a30; } .seek span { display: block; width: 68%; height: 100%; background: #eee9dc; }
+		.brand { height: 24px; padding-top: 5px; text-align: center; color: #c6cbd4; font-size: 12px; }
+		@media(max-width:550px) { body { padding: 12px; } .video { min-height: 330px; } .choice-wrap { left: 6%; right: 6%; } .choices { gap: 12px; } button { font-size: 13px; } }
+	</style>
+</head>
+<body>
+	<div id="bg" aria-hidden="true"></div>
+	<main class="player" aria-label="Interactive video">
+		<section class="video">
+			<div class="wall" aria-hidden="true"></div><div class="table" aria-hidden="true"></div>
+			<p id="subtitle" class="subtitle">INTRODUCTION
+
+Adrian Cross woke to the sound of his baby crying.
+
+He rushed into Lyra's room.
+
+Her crib was empty.
+
+A black pendant lay beside the window.
+
+He followed the footprints into the forest.</p>
+			<div class="choice-wrap">
+				<div class="choices"><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
+				<div class="timer" aria-label="30 second timer">
+					<span class="timer-fill"></span>
+				</div>
+			</div>
+		</section>
+	</main>
+	<script>
+		const buttons = document.querySelectorAll('.choices button');
+		const bg = document.getElementById('bg');
+		const subtitle = document.getElementById('subtitle');
+		let currentStage = 1;
+		let autoDecisionTimer = null;
+		let subtitleReadTimer = null;
+		const AUTO_DECISION_DELAY = 20000;
+
+		const sceneMap = {
+			2: { good: '2A_2K_20260927155652.jpg', bad: '2B_2K_20260927155647.jpg' },
+			3: { good: '3A_2K_20260927155638.jpg', bad: '3B_2K_20260927155702.jpg' },
+			4: { good: '4A_2K_20260927155623.jpg', bad: '4B_2K_20260927155657.jpg' },
+			5: { good: 'Adrian_carrying_baby_through_tun…_2K_20260927164402.jpg', bad: '5B_2K_20260927155634.jpg' },
+			6: { good: '6A_2K_20260927155631.jpg', bad: '6B_2K_20260927155643.jpg' },
+			7: { good: '7A_2K_20260927155609.jpg', bad: '7B_2K_20260927155541.jpg' },
+			8: { good: '8A_2K_20260927155538.jpg', bad: '8B_2K_20260927155556.jpg' },
+			9: { good: '9A_2K_20260927155532.jpg', bad: '9B_2K_20260927155551.jpg' },
+			10: { good: '10A_2K_20260927155544.jpg', bad: '10B_2K_20260927155549.jpg' },
+			11: { good: 'ENDING_1_2K_20260927155601.jpg', bad: 'ENDING_2_2K_20260927155612.jpg' }
+		};
+
+		const choicesMap = {
+			1: [
+				['Enter the abandoned house', 'Go toward the church']
+			],
+			2: [
+				['Confront the person', 'Hide and observe'],
+				['Follow the crying underground', 'Search the church first']
+			],
+			3: [
+				['Ask about Lyra', "Demand to know who 'they' are"],
+				['Take the file and find Lyra', 'Read the entire file']
+			],
+			4: [
+				['Leave with Lyra', 'Investigate what frightened her'],
+				['Search for Lyra', 'Find out what A-17 means']
+			],
+			5: [
+				['Escape with Lyra', 'Go deeper into the mountain'],
+				['Ask what Adrian really is', 'Ignore the photograph and escape']
+			],
+			6: [
+				['Confront Selene', 'Run deeper into the forest'],
+				['Listen to the Remnant', 'Destroy the Remnant']
+			],
+			7: [
+				['Find a way to destroy the Remnant', "Accept the Remnant's power"],
+				['Stay behind and activate the machine', 'Find another way to destroy it']
+			],
+			8: [
+				['Complete the destruction', 'Run back to Lyra'],
+				['Leave the village with Lyra', 'Return to the ruins']
+			],
+			9: [
+				['Keep moving and protect Lyra', 'Go back and make sure the Remnant is destroyed'],
+				['Take Lyra and escape', 'Return to the chamber']
+			]
+		};
+
+		const subtitleMap = {
+			1: {
+				text: 'Adrian Cross woke to the sound of his baby crying.\n\nHe rushed into Lyra\'s room.\n\nHer crib was empty.\n\nA black pendant lay beside the window.\n\nHe followed the footprints into the forest.'
+			},
+			2: {
+				good: 'Adrian entered the abandoned house and found a photograph of Selene from years before.\n\nThe message beneath it read: SHE WAS NEVER THE FIRST.\n\nFeet approached from behind.',
+				bad: 'Adrian entered the church and found Lyra\'s blanket with a small metal key beneath it.\n\nThe crying was coming from below.'
+			},
+			3: {
+				good: 'A woman who looked exactly like Selene stood in the dark.\n\nShe said she had been created from Selene\'s memories.\n\nThen Lyra cried beneath them.',
+				bad: 'Adrian found a hidden laboratory and a file labeled SUBJECT A-17.\n\nThe file revealed the first stage of something impossible.\n\nThen Lyra cried again.'
+			},
+			4: {
+				good: 'Adrian found Lyra in a hidden room, but she was frightened by something unseen.\n\nHe had to decide whether to leave or investigate.',
+				bad: 'The file revealed the Veil and the Remnant.\n\nIt showed Lyra\'s memory construction before she was born.'
+			},
+			5: {
+				good: 'Adrian carried Lyra through the tunnels while a shadow moved behind them.\n\nA fork in the path opened before him.',
+				bad: 'Selene was waiting in the lab.\n\nThe memory of Adrian himself appeared in the archive.'
+			},
+			6: {
+				good: 'Adrian reached the surface, but Selene stood in the snow with a weapon.\n\nThe choice became survival.',
+				bad: 'Adrian reached the deepest chamber and discovered the Remnant imitating Lyra\'s voice.\n\nThe truth was unfolding beneath the mountain.'
+			},
+			7: {
+				good: 'The Remnant revealed it had created the Veil and manipulated humanity.\n\nAdrian was now staring into the source of everything.',
+				bad: 'Adrian attacked the machinery around the Remnant.\n\nAn emergency warning claimed only one living subject could trigger destruction.'
+			},
+			8: {
+				good: 'Adrian placed Lyra safely outside and returned to the chamber.\n\nThe mountain began to collapse.',
+				bad: 'Adrian refused the Remnant and destroyed the machine around it.\n\nThe mountain shook as the energy surged.'
+			},
+			9: {
+				good: 'Adrian carried Lyra away, but the pendant began to glow.\n\nThe Remnant may have survived.',
+				bad: 'Adrian turned back toward the ruins.\n\nThe voices beneath the mountain called him forward.'
+			},
+			10: {
+				good: 'Adrian chose Lyra and fled the mountain.\n\nA fragile chance at safety remained.',
+				bad: 'Adrian returned to the chamber and chose destruction over escape.\n\nThe mountain collapsed around him.'
+			},
+			11: {
+				good: 'The Remnant had chosen Lyra.\n\nAdrian realized the nightmare was only beginning.',
+				bad: 'Adrian sacrificed himself to save Lyra.\n\nShe survived, but the mountain still whispered his name.'
+			}
+		};
+
+		function restartTimer() {
+			const timer = document.querySelector('.timer');
+			const timerFill = timer?.querySelector('.timer-fill');
+			if (!timer || !timerFill) return;
+			const cloned = timerFill.cloneNode(true);
+			timerFill.remove();
+			timer.appendChild(cloned);
+		}
+
+		function scheduleAutoDecision() {
+			if (autoDecisionTimer) {
+				clearTimeout(autoDecisionTimer);
+			}
+			autoDecisionTimer = setTimeout(() => {
+				const randomIndex = Math.floor(Math.random() * buttons.length);
+				chooseOption(randomIndex, true);
+			}, AUTO_DECISION_DELAY);
+		}
+
+		function chooseOption(buttonIndex, isAutoDecision = false) {
+			document.querySelectorAll('.choices button').forEach(option => option.classList.remove('chosen'));
+			const selectedButton = buttons[buttonIndex];
+			if (selectedButton) {
+				selectedButton.classList.add('chosen');
+			}
+
+			const isGoodNews = buttonIndex === 0;
+			currentStage += 1;
+			if (currentStage > 9) {
+				const choiceWrap = document.querySelector('.choice-wrap');
+				if (choiceWrap) choiceWrap.style.display = 'none';
+				setScene(11, isGoodNews);
+				updateSubtitle(11, isGoodNews);
+				if (autoDecisionTimer) {
+					clearTimeout(autoDecisionTimer);
+				}
+				return;
+			}
+			setScene(currentStage, isGoodNews);
+			updateSubtitle(currentStage, isGoodNews);
+			updateChoices(currentStage, isGoodNews);
+			restartTimer();
+			scheduleAutoDecision();
+		}
+
+		function updateSubtitle(stage, isGoodNews) {
+			if (!subtitle) return;
+			const data = subtitleMap[stage];
+			if (!data) return;
+			const text = (stage === 1 ? data.text : (isGoodNews ? data.good : data.bad)).replace(/\s+/g, ' ').trim();
+			if (subtitleReadTimer) {
+				clearTimeout(subtitleReadTimer);
+			}
+			subtitle.textContent = '';
+			let index = 0;
+			const reveal = () => {
+				subtitle.textContent = text.slice(0, index);
+				index += 1;
+				if (index <= text.length) {
+					subtitleReadTimer = setTimeout(reveal, 28);
+				}
+			};
+			reveal();
+		}
+
+		function updateChoices(stage, branch) {
+			const choices = choicesMap[stage];
+			if (!choices) return;
+			const labels = stage === 1 ? choices[0] : choices[branch ? 0 : 1];
+			buttons[0].textContent = labels[0];
+			buttons[1].textContent = labels[1];
+		}
+
+		function setScene(stage, isGoodNews) {
+			const scene = sceneMap[stage];
+			if (!scene || !bg) return;
+			const chosen = isGoodNews ? scene.good : scene.bad;
+			bg.style.backgroundImage = `url('${chosen}')`;
+		}
+
+		currentStage = 1;
+		setScene(currentStage, true);
+		updateSubtitle(currentStage, true);
+		updateChoices(currentStage, true);
+		scheduleAutoDecision();
+
+		buttons.forEach((button, buttonIndex) => button.addEventListener('click', () => {
+			if (autoDecisionTimer) {
+				clearTimeout(autoDecisionTimer);
+			}
+			chooseOption(buttonIndex, false);
+		}));
+	</script>
+</body>
+</html>
