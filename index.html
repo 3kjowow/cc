@@ -129,6 +129,18 @@
 			button { min-height: 48px; font-size: clamp(14px, 3.2vw, 18px); }
 			.timer { height: 5px; }
 		}
+		@media (orientation: landscape) and (max-height: 550px) {
+			.subtitle {
+				top: 34%;
+				width: min(88vw, 1100px);
+				font-size: clamp(16px, 2.2vw, 26px);
+				line-height: 1.3;
+			}
+			.choice-wrap { left: 8%; right: 8%; bottom: 2.5vh; }
+			.choices { gap: 12px; }
+			button { min-height: 34px; font-size: 13px; }
+			.timer { height: 4px; }
+		}
 		@media (max-width: 560px) {
 			body { padding: 0; }
 			.video { min-height: 100svh; }
