@@ -103,14 +103,6 @@
 			overflow: hidden;
 			box-shadow: 0 0 10px rgba(255,255,255,0.1);
 		}
-		.sound-toggle {
-			display: block;
-			width: auto;
-			min-height: 32px;
-			margin: 8px auto 0;
-			padding: 4px 12px;
-			font-size: 13px;
-		}
 		.timer-fill {
 			display: block;
 			height: 100%;
@@ -196,7 +188,7 @@ He followed the footprints until he reached an abandoned mountain settlement.
 
 A church stood at the center of the village.
 
-The bell suddenly rang.
+The church bell rang once.
 
 Then Adrian heard Lyra crying.
 
@@ -206,7 +198,6 @@ He ran toward the sound.</p>
 					<div class="timer" aria-label="95 second timer">
 						<span class="timer-fill"></span>
 					</div>
-					<button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="true">Mute sound</button>
 				</div>
 			</div>
 		</section>
@@ -215,22 +206,90 @@ He ran toward the sound.</p>
 		const buttons = document.querySelectorAll('.choices button');
 		const bg = document.getElementById('bg');
 		const subtitle = document.getElementById('subtitle');
-		const soundToggle = document.getElementById('sound-toggle');
 		const introSounds = [
 			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
 			new Audio('dragon-studio-wolf-howl-2-359870.mp3')
 		];
+		const subtitleSounds = {
+			house: new Audio('dragon-studio-creaking-401724.mp3'),
+			footsteps: new Audio('freesound_community-footsteps-stairs-slow-106711.mp3'),
+			churchBell: new Audio('universfield-church-bell-toll-156464.mp3'),
+			churchCry: new Audio('freesound_community-baby-cry-in-church-79296.mp3'),
+			whisper: new Audio('freesound_community-creepy-whispering-6690.mp3'),
+			paper: new Audio('freesound_community-rustling-paper-46380.mp3'),
+			darkMagic: new Audio('yodguard-dark-magic-1-378650.mp3'),
+			paperFlutter: new Audio('freesound_community-paper-flutter-5933.mp3'),
+			heartbeat: new Audio('universfield-rapid-heartbeat-151928.mp3'),
+			gravelRun: new Audio('audiopapkin-running-on-gravel-301880.mp3'),
+			wallImpact: new Audio('dragon-studio-boulder-impact-487673.mp3'),
+			deepHumming: new Audio('freesound_community-short-deep-humming-102866.mp3'),
+			windSnow: new Audio('dragon-studio-howling-wind-and-snow-515984.mp3'),
+			gunReload: new Audio('dragon-studio-gun-reload-511309.mp3'),
+			babyCry: new Audio('dragon-studio-crying-baby-320170.mp3'),
+			ghostWhispers: new Audio('freesound_community-ghost-whispers-6030.mp3'),
+			remnantVoice: new Audio('audiopapkin-alien-voice-sfx-004-297911.mp3'),
+			cinematicPulse: new Audio('dragon-studio-cinematic-pulse-463209.mp3'),
+			mechanicalSfx: new Audio('audiopapkin-mechanical-sfx-010-314770.mp3'),
+			alarmSiren: new Audio('ribhavagrawal-alarm-siren-sound-effect-type-01-294194.mp3'),
+			electricSparks: new Audio('freesound_community-electric-sparks-6130.mp3'),
+			energyCharge: new Audio('yodguard-energy-charge-1-482503.mp3'),
+			collapseRumble: new Audio('themediaguy-earthquake-rumble-amp-cracking-379298.mp3'),
+			ironSmash: new Audio('soumages-iron-smash-with-debris-351841.mp3'),
+			energyWhoosh: new Audio('dragon-studio-whoosh-cinematic-sound-effect-376889.mp3'),
+			heavyBreathing: new Audio('ribhavagrawal-heavy-breathing-sound-effect-type-02-294195.mp3'),
+			churchBellRing: new Audio('soundreality-bell-fx-410608.mp3'),
+			ruinFootsteps: new Audio('dragon-studio-fast-footsteps-on-snow-335509.mp3'),
+			endingSwoosh: new Audio('dragon-studio-copyright-free-swoosh-487669.mp3'),
+			shadowFootsteps: new Audio('dragon-studio-footsteps-in-snow-335506.mp3'),
+			quakeBreak: new Audio('freesound_community-quake-and-break-99034.mp3'),
+			endingBell: new Audio('universfield-church-bell-toll-156464 (1).mp3'),
+			endingBeam: new Audio('yodguard-energy-beam-blast-4-482514.mp3'),
+			endingCollapse: new Audio('themediaguy-earthquake-rumble-amp-cracking-379298.mp3')
+		};
+		const subtitleSoundCues = {
+			house: { line: 'Adrian entered the abandoned house.', stage: 2, good: true },
+			footsteps: { line: 'Suddenly, Adrian heard footsteps behind him.', stage: 2, good: true },
+			churchBell: { line: 'Adrian entered the church.', stage: 2, good: false },
+			churchCry: { line: 'Then he heard Lyra crying beneath the church.', stage: 2, good: false },
+			whisper: { line: 'Adrian discovered a woman standing in the darkness.', stage: 3, good: true },
+			paper: { line: 'There were photographs of Adrian, Selene, and Lyra.', stage: 3, good: false },
+			darkMagic: { line: 'But something had clearly frightened her.', stage: 4, good: true },
+			paperFlutter: { line: 'The file revealed the truth.', stage: 4, good: false },
+			heartbeat: { line: 'His hands began to shake.', stage: 4, good: false },
+			gravelRun: { line: 'Adrian carried Lyra through the underground tunnels.', stage: 5, good: true },
+			wallImpact: { line: 'Something slammed against the walls.', stage: 5, good: true },
+			deepHumming: { line: 'The date was years before his birth.', stage: 5, good: false },
+			windSnow: { line: 'Adrian reached the surface.', stage: 6, good: true },
+			gunReload: { line: 'She was holding a weapon.', stage: 6, good: true },
+			babyCry: { line: 'Lyra began crying.', stage: 5, good: true },
+			ghostWhispers: { line: 'Hundreds of voices whispered around it.', stage: 6, good: false },
+			remnantVoice: { line: 'The crying was coming from the Remnant.', stage: 6, good: false },
+			cinematicPulse: { line: 'The Remnant revealed the truth.', stage: 7, good: true },
+			mechanicalSfx: { line: 'Adrian attacked the machinery surrounding the Remnant.', stage: 7, good: false },
+			alarmSiren: { line: 'An emergency warning appeared:', stage: 7, good: false },
+			electricSparks: { line: 'Adrian stared at the screen.', stage: 7, good: false },
+			energyCharge: { line: 'The chamber erupted with light.', stage: 8, good: true },
+			collapseRumble: { line: 'The mountain began collapsing.', stage: 8, good: null },
+			ironSmash: { line: 'He destroyed the machinery around it.', stage: 8, good: false },
+			energyWhoosh: { line: 'The Remnant released a powerful wave of energy.', stage: 8, good: false },
+			heavyBreathing: { line: 'For a moment, Adrian thought it was over.', stage: 8, good: false },
+			churchBellRing: { line: 'The church bell rang once.', stage: 1, good: true },
+			ruinFootsteps: { line: 'Adrian turned toward the ruins.', stage: 9, good: false },
+			endingSwoosh: { line: 'Adrian chose Lyra.', stage: 10, good: true },
+			shadowFootsteps: { line: 'It reached toward him with countless tendrils of shadow.', stage: 10, good: false },
+			quakeBreak: { line: 'It reached toward him with countless tendrils of shadow.', stage: 10, good: false },
+			endingBell: { line: 'A church bell.', stage: 11, good: true },
+			endingBeam: { line: 'A powerful light filled the chamber.', stage: 11, good: false },
+			endingCollapse: { line: 'The chamber collapsed.', stage: 11, good: false }
+		};
 		introSounds[0].volume = 0.65;
 		introSounds[1].volume = 0.35;
-		let audioEnabled = true;
-		let introCuePending = false;
 		let currentStage = 1;
 		let autoDecisionTimer = null;
 		let subtitleReadTimer = null;
 		const AUTO_DECISION_DELAY = 95000;
 
 		function stopIntroSounds() {
-			introCuePending = false;
 			introSounds.forEach(sound => {
 				sound.pause();
 				sound.currentTime = 0;
@@ -238,29 +297,23 @@ He ran toward the sound.</p>
 		}
 
 		function playIntroSounds() {
-			introCuePending = false;
 			introSounds.forEach(sound => {
 				sound.currentTime = 0;
 			});
-			Promise.all(introSounds.map(sound => sound.play())).catch(() => {
-				introSounds.forEach(sound => sound.pause());
-				introCuePending = true;
-				audioEnabled = false;
-				soundToggle.textContent = 'Enable sound';
-				soundToggle.setAttribute('aria-pressed', 'false');
+			Promise.all(introSounds.map(sound => sound.play())).catch(() => {});
+		}
+
+		function stopSubtitleSounds() {
+			Object.values(subtitleSounds).forEach(sound => {
+				sound.pause();
+				sound.currentTime = 0;
 			});
 		}
 
-		soundToggle.addEventListener('click', () => {
-			audioEnabled = !audioEnabled;
-			soundToggle.textContent = audioEnabled ? 'Mute sound' : 'Enable sound';
-			soundToggle.setAttribute('aria-pressed', String(audioEnabled));
-			if (!audioEnabled) {
-				stopIntroSounds();
-				return;
-			}
-			if (introCuePending) playIntroSounds();
-		});
+		function playSubtitleSound(sound) {
+			sound.currentTime = 0;
+			sound.play().catch(() => {});
+		}
 
 		const sceneMap = {
 			2: { good: '2A_2K_20260927155652.jpg', bad: '2B_2K_20260927155647.jpg' },
@@ -315,7 +368,7 @@ He ran toward the sound.</p>
 
 		const subtitleMap = {
 			1: {
-				text: 'Adrian Cross woke to the sound of his baby crying.\n\nHe rushed into Lyra\'s room.\n\nHer crib was empty.\n\nThe window was open, and snow covered the floor. Adrian looked outside and saw tiny footprints leading into the forest.\n\nBeside the window was a black pendant shaped like a crown.\n\nAdrian grabbed it and ran outside.\n\nHe followed the footprints until he reached an abandoned mountain settlement.\n\nA church stood at the center of the village.\n\nThe bell suddenly rang.\n\nThen Adrian heard Lyra crying.\n\nHe ran toward the sound.'
+				text: 'Adrian Cross woke to the sound of his baby crying.\n\nHe rushed into Lyra\'s room.\n\nHer crib was empty.\n\nThe window was open, and snow covered the floor. Adrian looked outside and saw tiny footprints leading into the forest.\n\nBeside the window was a black pendant shaped like a crown.\n\nAdrian grabbed it and ran outside.\n\nHe followed the footprints until he reached an abandoned mountain settlement.\n\nA church stood at the center of the village.\n\nThe church bell rang once.\n\nThen Adrian heard Lyra crying.\n\nHe ran toward the sound.'
 			},
 			2: {
 				good: 'Adrian entered the abandoned house.\n\nOld photographs covered the walls.\n\nOne photograph caught his attention.\n\nIt showed Selene.\n\nShe looked exactly as she did today.\n\nThe photograph was twenty years old.\n\nUnderneath it was written: SHE WAS NEVER THE FIRST.\n\nSuddenly, Adrian heard footsteps behind him.',
@@ -407,6 +460,7 @@ He ran toward the sound.</p>
 		function updateSubtitle(stage, isGoodNews) {
 			if (!subtitle) return;
 			stopIntroSounds();
+			stopSubtitleSounds();
 			const data = subtitleMap[stage];
 			if (!data) return;
 			const parts = (stage === 1 ? data.text : (isGoodNews ? data.good : data.bad))
@@ -422,10 +476,17 @@ He ran toward the sound.</p>
 			const revealPart = () => {
 				const part = parts[partIndex];
 				if (stage === 1 && characterIndex === 0 && part === 'He followed the footprints until he reached an abandoned mountain settlement.') {
-					if (audioEnabled) playIntroSounds();
-					else introCuePending = true;
+					playIntroSounds();
 				}
 				subtitle.textContent = part.slice(0, characterIndex);
+				if (stage === 1 || stage === 2 || stage === 3 || stage === 4 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 11) {
+					Object.entries(subtitleSoundCues).forEach(([key, cue]) => {
+						const linePosition = part.indexOf(cue.line);
+						if (cue.stage === stage && (cue.good === null || cue.good === isGoodNews) && linePosition >= 0 && characterIndex === linePosition + cue.line.length) {
+							playSubtitleSound(subtitleSounds[key]);
+						}
+					});
+				}
 				if (characterIndex < part.length) {
 					characterIndex += 1;
 					subtitleReadTimer = setTimeout(revealPart, 40);
