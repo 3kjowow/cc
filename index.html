@@ -139,7 +139,7 @@
 		.reflection-screen.is-visible { opacity: 1; visibility: visible; }
 		.reflection-content {
 			width: min(900px, 100%);
-			max-height: min(32vh, 280px);
+			max-height: min(84vh, 760px);
 			overflow-y: auto;
 			scrollbar-gutter: stable;
 		}
@@ -332,6 +332,7 @@
 			<h1 id="reflection-title" class="reflection-title">GROUP REFLECTION</h1>
 			<p>Working on The Remnant was both fun and challenging for our team. At first, writing a story about a father searching for his missing daughter sounded simple. But once we started building 10 decision points and connecting all the branching paths, we realized how much effort goes into making an interactive digital story.</p>
 			<p>We learned a lot about organizing our slides, making sure the hyperlinks actually worked without breaking, and using sound effects to build a scary atmosphere. Combining our different roles, from writing the script to editing the audio, showed us how important teamwork really is. In the end, we're super proud of how the project turned out, and we hope the reader feels the weight of every choice they make.</p>
+			<p>We used Gemini AI, ChatGPT and Google Flow to assist us with images and plot. We reviewed and revised the AI-assisted content, and we take full responsibility for our final output.</p>
 		</div>
 	</section>
 	<script>
@@ -653,10 +654,12 @@
 				}
 				if (characterIndex < part.length) {
 					characterIndex += 1;
-					subtitleReadTimer = setTimeout(revealPart, 40);
+					subtitleReadTimer = setTimeout(revealPart, stage >= 10 ? 60 : 40);
 					return;
 				}
-				const readingPause = Math.max(3000, part.split(/\s+/).length * 350);
+				const readingPause = stage >= 10
+					? Math.max(1800, part.split(/\s+/).length * 180)
+					: Math.max(3000, part.split(/\s+/).length * 350);
 				if (partIndex < parts.length - 1) {
 					subtitleReadTimer = setTimeout(() => {
 						partIndex += 1;
