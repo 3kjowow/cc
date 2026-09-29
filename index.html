@@ -29,6 +29,25 @@
 			50% { transform: scale(1.06); filter: brightness(1) saturate(1.02); }
 			100% { transform: scale(1.02); filter: brightness(0.96) saturate(0.98); }
 		}
+		.start-screen {
+			position: fixed;
+			inset: 0;
+			z-index: 5;
+			display: grid;
+			place-items: end center;
+			padding: clamp(24px, 7vh, 64px) 20px;
+			background: #111 url('photo_6188188244881642455_y.jpg') center / cover no-repeat;
+			opacity: 1;
+			transition: opacity 900ms ease, visibility 0s linear 900ms;
+		}
+		.start-screen::before {
+			content: '';
+			position: absolute;
+			inset: 45% 0 0;
+			background: linear-gradient(transparent, rgba(0,0,0,0.62));
+			pointer-events: none;
+		}
+		.start-screen.is-leaving { opacity: 0; visibility: hidden; }
 		.player {
 			position: relative;
 			z-index: 1;
@@ -38,7 +57,11 @@
 			background: transparent;
 			border: none;
 			box-shadow: none;
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity 900ms ease, visibility 0s linear 900ms;
 		}
+		.player.is-active { opacity: 1; visibility: visible; transition-delay: 0s; }
 		.video {
 			position: relative;
 			width: 100%;
@@ -90,8 +113,6 @@
 			margin: 0 auto;
 			pointer-events: auto;
 		}
-		#sound-start { display: block; width: min(100%, 460px); min-height: 48px; margin: 0 auto; }
-		#sound-start[hidden], .choices[hidden], .timer[hidden] { display: none; }
 		.choices { display: flex; justify-content: space-between; gap: 18%; }
 		button { position: relative; z-index: 2; flex: 1; min-height: 40px; border: 1px solid #c6b98e; border-radius: 5px; color: white; background: #252431ed; font: 700 15px Arial,sans-serif; cursor: pointer; }
 		button:hover, button:focus-visible, button.chosen { background: #716b82; outline: 2px solid #eee0a6; }
@@ -113,7 +134,9 @@
 			border-radius: inherit;
 			transform-origin: center center;
 			animation: countdown 95s linear forwards;
+			animation-play-state: paused;
 		}
+		.player.is-active .timer-fill { animation-play-state: running; }
 		@keyframes countdown {
 			0% { transform: scaleX(1); }
 			50% { transform: scaleX(0.45); }
@@ -170,35 +193,16 @@
 </head>
 <body>
 	<div id="bg" aria-hidden="true"></div>
+	<section id="start-screen" class="start-screen" aria-label="The Remnant title screen">
+	</section>
 	<main class="player" aria-label="Interactive video">
 		<section class="video">
 			<div class="wall" aria-hidden="true"></div><div class="table" aria-hidden="true"></div>
 			<div class="scene-layer">
-				<p id="subtitle" class="subtitle">Adrian Cross woke to the sound of his baby crying.
-
-He rushed into Lyra's room.
-
-Her crib was empty.
-
-The window was open, and snow covered the floor. Adrian looked outside and saw tiny footprints leading into the forest.
-
-Beside the window was a black pendant shaped like a crown.
-
-Adrian grabbed it and ran outside.
-
-He followed the footprints until he reached an abandoned mountain settlement.
-
-A church stood at the center of the village.
-
-The church bell rang once.
-
-Then Adrian heard Lyra crying.
-
-He ran toward the sound.</p>
+				<p id="subtitle" class="subtitle"></p>
 				<div class="choice-wrap">
-					<button id="sound-start" type="button">Start with sound</button>
-					<div class="choices" hidden><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
-					<div class="timer" aria-label="95 second timer" hidden>
+					<div class="choices"><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
+					<div class="timer" aria-label="95 second timer">
 						<span class="timer-fill"></span>
 					</div>
 				</div>
@@ -209,9 +213,8 @@ He ran toward the sound.</p>
 		const buttons = document.querySelectorAll('.choices button');
 		const bg = document.getElementById('bg');
 		const subtitle = document.getElementById('subtitle');
-		const soundStartButton = document.getElementById('sound-start');
-		const choicesElement = document.querySelector('.choices');
-		const timerElement = document.querySelector('.timer');
+		const player = document.querySelector('.player');
+		const startScreen = document.getElementById('start-screen');
 		const introSounds = [
 			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
 			new Audio('dragon-studio-wolf-howl-2-359870.mp3')
@@ -311,7 +314,10 @@ He ran toward the sound.</p>
 			});
 		}
 
+		let audioUnlockStarted = false;
 		async function unlockAudio() {
+			if (audioUnlockStarted) return;
+			audioUnlockStarted = true;
 			const sounds = [...introSounds, ...Object.values(subtitleSounds)];
 			await Promise.all(sounds.map(async sound => {
 				sound.muted = true;
@@ -551,20 +557,18 @@ He ran toward the sound.</p>
 		}
 
 		currentStage = 1;
-		soundStartButton.addEventListener('click', async () => {
-			soundStartButton.disabled = true;
-			soundStartButton.textContent = 'Enabling sound...';
-			await unlockAudio();
-			document.body.classList.add('sound-enabled');
-			soundStartButton.hidden = true;
-			choicesElement.hidden = false;
-			timerElement.hidden = false;
+		document.addEventListener('pointerdown', unlockAudio, { once: true });
+		document.addEventListener('keydown', unlockAudio, { once: true });
+		window.setTimeout(() => {
 			setScene(currentStage, true);
+			player.classList.add('is-active');
+			startScreen.classList.add('is-leaving');
 			updateSubtitle(currentStage, true);
 			updateChoices(currentStage, true);
 			restartTimer();
 			scheduleAutoDecision();
-		});
+			window.setTimeout(() => { startScreen.hidden = true; }, 950);
+		}, 10000);
 
 		buttons.forEach((button, buttonIndex) => button.addEventListener('click', () => {
 			if (autoDecisionTimer) {
