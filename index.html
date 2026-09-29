@@ -103,6 +103,14 @@
 			overflow: hidden;
 			box-shadow: 0 0 10px rgba(255,255,255,0.1);
 		}
+		.sound-toggle {
+			display: block;
+			width: auto;
+			min-height: 32px;
+			margin: 8px auto 0;
+			padding: 4px 12px;
+			font-size: 13px;
+		}
 		.timer-fill {
 			display: block;
 			height: 100%;
@@ -110,7 +118,7 @@
 			background: linear-gradient(90deg, #dfe6ef, #f2f5fa);
 			border-radius: inherit;
 			transform-origin: center center;
-			animation: countdown 35s linear forwards;
+			animation: countdown 95s linear forwards;
 		}
 		@keyframes countdown {
 			0% { transform: scaleX(1); }
@@ -172,22 +180,33 @@
 		<section class="video">
 			<div class="wall" aria-hidden="true"></div><div class="table" aria-hidden="true"></div>
 			<div class="scene-layer">
-				<p id="subtitle" class="subtitle">INTRODUCTION
-
-Adrian Cross woke to the sound of his baby crying.
+				<p id="subtitle" class="subtitle">Adrian Cross woke to the sound of his baby crying.
 
 He rushed into Lyra's room.
 
 Her crib was empty.
 
-A black pendant lay beside the window.
+The window was open, and snow covered the floor. Adrian looked outside and saw tiny footprints leading into the forest.
 
-He followed the footprints into the forest.</p>
+Beside the window was a black pendant shaped like a crown.
+
+Adrian grabbed it and ran outside.
+
+He followed the footprints until he reached an abandoned mountain settlement.
+
+A church stood at the center of the village.
+
+The bell suddenly rang.
+
+Then Adrian heard Lyra crying.
+
+He ran toward the sound.</p>
 				<div class="choice-wrap">
 					<div class="choices"><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
-					<div class="timer" aria-label="35 second timer">
+					<div class="timer" aria-label="95 second timer">
 						<span class="timer-fill"></span>
 					</div>
+					<button id="sound-toggle" class="sound-toggle" type="button" aria-pressed="true">Mute sound</button>
 				</div>
 			</div>
 		</section>
@@ -196,10 +215,52 @@ He followed the footprints into the forest.</p>
 		const buttons = document.querySelectorAll('.choices button');
 		const bg = document.getElementById('bg');
 		const subtitle = document.getElementById('subtitle');
+		const soundToggle = document.getElementById('sound-toggle');
+		const introSounds = [
+			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
+			new Audio('dragon-studio-wolf-howl-2-359870.mp3')
+		];
+		introSounds[0].volume = 0.65;
+		introSounds[1].volume = 0.35;
+		let audioEnabled = true;
+		let introCuePending = false;
 		let currentStage = 1;
 		let autoDecisionTimer = null;
 		let subtitleReadTimer = null;
-		const AUTO_DECISION_DELAY = 35000;
+		const AUTO_DECISION_DELAY = 95000;
+
+		function stopIntroSounds() {
+			introCuePending = false;
+			introSounds.forEach(sound => {
+				sound.pause();
+				sound.currentTime = 0;
+			});
+		}
+
+		function playIntroSounds() {
+			introCuePending = false;
+			introSounds.forEach(sound => {
+				sound.currentTime = 0;
+			});
+			Promise.all(introSounds.map(sound => sound.play())).catch(() => {
+				introSounds.forEach(sound => sound.pause());
+				introCuePending = true;
+				audioEnabled = false;
+				soundToggle.textContent = 'Enable sound';
+				soundToggle.setAttribute('aria-pressed', 'false');
+			});
+		}
+
+		soundToggle.addEventListener('click', () => {
+			audioEnabled = !audioEnabled;
+			soundToggle.textContent = audioEnabled ? 'Mute sound' : 'Enable sound';
+			soundToggle.setAttribute('aria-pressed', String(audioEnabled));
+			if (!audioEnabled) {
+				stopIntroSounds();
+				return;
+			}
+			if (introCuePending) playIntroSounds();
+		});
 
 		const sceneMap = {
 			2: { good: '2A_2K_20260927155652.jpg', bad: '2B_2K_20260927155647.jpg' },
@@ -254,47 +315,47 @@ He followed the footprints into the forest.</p>
 
 		const subtitleMap = {
 			1: {
-				text: 'Adrian Cross woke to the sound of his baby crying.\n\nHe rushed into Lyra\'s room.\n\nHer crib was empty.\n\nA black pendant lay beside the window.\n\nHe followed the footprints into the forest.'
+				text: 'Adrian Cross woke to the sound of his baby crying.\n\nHe rushed into Lyra\'s room.\n\nHer crib was empty.\n\nThe window was open, and snow covered the floor. Adrian looked outside and saw tiny footprints leading into the forest.\n\nBeside the window was a black pendant shaped like a crown.\n\nAdrian grabbed it and ran outside.\n\nHe followed the footprints until he reached an abandoned mountain settlement.\n\nA church stood at the center of the village.\n\nThe bell suddenly rang.\n\nThen Adrian heard Lyra crying.\n\nHe ran toward the sound.'
 			},
 			2: {
-				good: 'Adrian entered the abandoned house and found a photograph of Selene from years before.\n\nThe message beneath it read: SHE WAS NEVER THE FIRST.\n\nFeet approached from behind.',
-				bad: 'Adrian entered the church and found Lyra\'s blanket with a small metal key beneath it.\n\nThe crying was coming from below.'
+				good: 'Adrian entered the abandoned house.\n\nOld photographs covered the walls.\n\nOne photograph caught his attention.\n\nIt showed Selene.\n\nShe looked exactly as she did today.\n\nThe photograph was twenty years old.\n\nUnderneath it was written: SHE WAS NEVER THE FIRST.\n\nSuddenly, Adrian heard footsteps behind him.',
+				bad: 'Adrian entered the church.\n\nAn empty cradle stood near the altar.\n\nLyra\'s blanket was inside.\n\nHe grabbed it.\n\nA small metal key fell from the blanket.\n\nThen he heard Lyra crying beneath the church.'
 			},
 			3: {
-				good: 'A woman who looked exactly like Selene stood in the dark.\n\nShe said she had been created from Selene\'s memories.\n\nThen Lyra cried beneath them.',
-				bad: 'Adrian found a hidden laboratory and a file labeled SUBJECT A-17.\n\nThe file revealed the first stage of something impossible.\n\nThen Lyra cried again.'
+				good: 'Adrian discovered a woman standing in the darkness.\n\nShe looked exactly like Selene.\n\n"Where is my wife?" Adrian demanded.\n\nThe woman answered: "Selene died years ago."\n\nAdrian froze.\n\n"I was created from her memories."\n\nBefore Adrian could respond, Lyra cried somewhere below them.\n\nThe woman looked toward the sound.\n\n"The baby is what they really want."',
+				bad: 'Adrian discovered a hidden laboratory beneath the church.\n\nPhotographs covered the walls.\n\nThere were photographs of Adrian, Selene, and Lyra.\n\nBut some of them were impossible.\n\nThey were taken before Adrian and Selene had even met.\n\nAdrian found a file labeled: SUBJECT A-17: ADRIAN CROSS\n\nHe opened it.\n\nThe first sentence read: SUBJECT HAS SUCCESSFULLY COMPLETED THE FIRST STAGE.\n\nThen he heard Lyra crying.'
 			},
 			4: {
-				good: 'Adrian found Lyra in a hidden room, but she was frightened by something unseen.\n\nHe had to decide whether to leave or investigate.',
-				bad: 'The file revealed the Veil and the Remnant.\n\nIt showed Lyra\'s memory construction before she was born.'
+				good: `Adrian followed Lyra's cries and found her inside a small underground room.\n\nHe quickly picked her up.\n\nLyra stopped crying and held onto his shirt.\n\nAdrian looked around.\n\nNothing seemed unusual.\n\nThen Lyra suddenly stared toward the corner of the room.\n\nShe began crying again.\n\nAdrian turned.\n\nThere was nothing there.\n\nBut something had clearly frightened her.`,
+				bad: 'The file revealed the truth.\n\nThe Veil was a secret organization studying a mysterious organism called the Remnant.\n\nThe Remnant could preserve memories.\n\nIt could also recreate people from those memories.\n\nAdrian turned the page.\n\nA photograph of Lyra appeared.\n\nThe date was six months before her birth.\n\nThe report read: SUBJECT L-03: MEMORY CONSTRUCTION SUCCESSFUL.\n\nAdrian stared at the photograph.\n\nThen he noticed another file.\n\nSUBJECT A-17: ADRIAN CROSS.\n\nHis hands began to shake.'
 			},
 			5: {
-				good: 'Adrian carried Lyra through the tunnels while a shadow moved behind them.\n\nA fork in the path opened before him.',
-				bad: 'Selene was waiting in the lab.\n\nThe memory of Adrian himself appeared in the archive.'
+				good: 'Adrian carried Lyra through the underground tunnels.\n\nSomething slammed against the walls.\n\nHe ran.\n\nA shadow moved behind him.\n\nLyra began crying.\n\nAdrian reached a fork in the tunnel.\n\nOne path led toward the surface.\n\nThe other went deeper underground.',
+				bad: 'Adrian returned to the laboratory.\n\nThe reconstructed Selene was waiting.\n\n"The Remnant created copies using memories," she explained.\n\nAdrian held Lyra tighter.\n\n"Then what is she?"\n\n"A baby," Selene answered.\n\nAdrian stared at her.\n\nSelene continued.\n\n"She doesn\'t know anything. She can\'t remember the past. But the memories used to create her came from somewhere."\n\nAdrian looked at the photograph of Lyra.\n\nThen he noticed another photograph.\n\nIt showed Adrian himself.\n\nThe date was years before his birth.'
 			},
 			6: {
-				good: 'Adrian reached the surface, but Selene stood in the snow with a weapon.\n\nThe choice became survival.',
-				bad: 'Adrian reached the deepest chamber and discovered the Remnant imitating Lyra\'s voice.\n\nThe truth was unfolding beneath the mountain.'
+				good: 'Adrian reached the surface.\n\nSnow fell heavily around him.\n\nFor a moment, he thought they were safe.\n\nThen Selene appeared in front of him.\n\nShe was holding a weapon.\n\n"Give me the baby."\n\nAdrian refused.\n\n"The Remnant chose her," Selene said.\n\nLyra began crying.\n\nSelene lowered the weapon.\n\n"You have no idea what that thing can do."',
+				bad: 'Adrian entered the deepest chamber.\n\nThe Remnant floated inside a huge glass container.\n\nHundreds of voices whispered around it.\n\nThen Adrian heard Lyra crying.\n\nHe looked down.\n\nLyra was still in his arms.\n\nShe was silent.\n\nThe crying was coming from the Remnant.\n\nIt had copied her voice.\n\nAdrian finally understood.\n\nThe Remnant could imitate anyone.'
 			},
 			7: {
-				good: 'The Remnant revealed it had created the Veil and manipulated humanity.\n\nAdrian was now staring into the source of everything.',
-				bad: 'Adrian attacked the machinery around the Remnant.\n\nAn emergency warning claimed only one living subject could trigger destruction.'
+				good: 'The Remnant revealed the truth.\n\nThe Veil did not control it.\n\nThe Remnant created the Veil.\n\nFor generations, it had manipulated humans into studying it and feeding it memories.\n\nThen Adrian heard his own voice coming from the creature.\n\n"You were chosen before you were born."\n\nAdrian looked at Lyra.\n\nShe was asleep.\n\nShe had no idea what was happening.\n\nThen the Remnant showed Adrian his memories.\n\nHis childhood.\n\nHis marriage.\n\nHis life with Selene.\n\nEverything had been carefully manipulated.',
+				bad: 'Adrian attacked the machinery surrounding the Remnant.\n\nThe chamber shook.\n\nAn emergency warning appeared: MANUAL DESTRUCTION REQUIRES ONE LIVING SUBJECT.\n\nAdrian stared at the screen.\n\nSomeone had to remain inside.\n\nHe looked at Lyra.\n\nShe reached toward him.'
 			},
 			8: {
-				good: 'Adrian placed Lyra safely outside and returned to the chamber.\n\nThe mountain began to collapse.',
-				bad: 'Adrian refused the Remnant and destroyed the machine around it.\n\nThe mountain shook as the energy surged.'
+				good: `Adrian discovered that destroying the Remnant required someone to activate the machine from inside the chamber.\n\nHe carried Lyra toward the exit.\n\nShe began crying.\n\nAdrian placed her safely outside.\n\n"I'll come back."\n\nHe knew he would not.\n\nAdrian returned to the chamber.\n\nThe Remnant surrounded him.\n\nThe voices of Selene, the Veil, and countless others filled the room.\n\nAdrian activated the machine.\n\nThe chamber erupted with light.\n\nThe mountain began collapsing.\n\nHe suddenly heard Lyra crying outside.\n\nAdrian hesitated.`,
+				bad: 'Adrian refused to accept the Remnant.\n\nHe destroyed the machinery around it.\n\nThe mountain began collapsing.\n\nThe Remnant released a powerful wave of energy.\n\nAdrian grabbed Lyra and ran.\n\nThe tunnels began falling apart behind him.\n\nHe reached the surface.\n\nThe mountain collapsed.\n\nSilence followed.\n\nFor a moment, Adrian thought it was over.\n\nThen he noticed the black pendant.\n\nIt was no longer in his hand.\n\nIt was hanging around Lyra\'s neck.'
 			},
 			9: {
 				good: 'Adrian carried Lyra away, but the pendant began to glow.\n\nThe Remnant may have survived.',
-				bad: 'Adrian turned back toward the ruins.\n\nThe voices beneath the mountain called him forward.'
+				bad: 'Adrian turned toward the ruins.\n\nThe mountain was still collapsing.\n\nA faint light appeared beneath the snow.\n\nHe heard countless voices whispering his name.\n\nThen he heard Lyra crying.\n\nAdrian looked down at her.\n\nHe knew he could not leave her alone.'
 			},
 			10: {
-				good: 'Adrian chose Lyra and fled the mountain.\n\nA fragile chance at safety remained.',
-				bad: 'Adrian returned to the chamber and chose destruction over escape.\n\nThe mountain collapsed around him.'
+				good: 'Adrian chose Lyra.\n\nHe ran as far away from the mountain as possible.\n\nThe village disappeared behind him.\n\nLyra eventually stopped crying and fell asleep in his arms.\n\nAdrian looked down at her.\n\nShe was safe.\n\nAt least for now.',
+				bad: 'Adrian returned to the ruins.\n\nHe entered the collapsing chamber.\n\nThe Remnant was still there.\n\nIt reached toward him with countless tendrils of shadow.\n\nAdrian looked at Lyra.\n\nShe was crying in his arms.\n\nHe knew there was only one way to make sure the Remnant could never reach her.\n\nHe placed Lyra safely outside the chamber.\n\nThen he turned toward the creature.'
 			},
 			11: {
-				good: 'The Remnant had chosen Lyra.\n\nAdrian realized the nightmare was only beginning.',
-				bad: 'Adrian sacrificed himself to save Lyra.\n\nShe survived, but the mountain still whispered his name.'
+				good: 'Adrian carried Lyra away from the village.\n\nThey traveled far from the mountains.\n\nFor several months, nothing happened.\n\nLyra remained an ordinary baby.\n\nShe cried.\n\nShe slept.\n\nShe laughed.\n\nShe reached for Adrian whenever she was frightened.\n\nBut every night at midnight, the black pendant around her neck glowed.\n\nThen, one night, Adrian heard something.\n\nA church bell.\n\nFar away.\n\nOne ring.\n\nThen another.\n\nAdrian looked down at Lyra.\n\nShe was sleeping peacefully.\n\nShe had no idea what was happening.\n\nAdrian finally understood.\n\nThe Remnant had not been destroyed.\n\nIt had chosen Lyra.\n\nNot because she understood it.\n\nNot because she wanted it.\n\nBut because she was the perfect vessel.\n\nAdrian held his daughter closer.\n\nThe nightmare was not over.\n\nIt had only begun.',
+				bad: `Adrian activated the destruction mechanism.\n\nA powerful light filled the chamber.\n\nThe Remnant's voices disappeared one by one.\n\nThe mountain shook violently.\n\nAdrian looked toward the exit one last time.\n\nLyra was safe.\n\nThat was all that mattered.\n\nThe chamber collapsed.\n\nAdrian disappeared with the Remnant.\n\nOutside, Lyra cried.\n\nBut she was alive.\n\nYears later, Lyra returned to the mountain.\n\nShe placed the black pendant on the snow.\n\nShe did not remember her father.\n\nShe had been only a baby.\n\nBut somehow, standing there made her feel safe.\n\nDeep beneath the ruins, a faint voice whispered: "Adrian."\n\nLyra looked toward the mountain.\n\nShe didn't know who had spoken.\n\nBut she smiled.`
 			}
 		};
 
@@ -345,22 +406,46 @@ He followed the footprints into the forest.</p>
 
 		function updateSubtitle(stage, isGoodNews) {
 			if (!subtitle) return;
+			stopIntroSounds();
 			const data = subtitleMap[stage];
 			if (!data) return;
-			const text = (stage === 1 ? data.text : (isGoodNews ? data.good : data.bad)).replace(/\s+/g, ' ').trim();
+			const parts = (stage === 1 ? data.text : (isGoodNews ? data.good : data.bad))
+				.split(/\n\s*\n/)
+				.map(part => part.trim())
+				.filter(Boolean);
 			if (subtitleReadTimer) {
 				clearTimeout(subtitleReadTimer);
 			}
 			subtitle.textContent = '';
-			let index = 0;
-			const reveal = () => {
-				subtitle.textContent = text.slice(0, index);
-				index += 1;
-				if (index <= text.length) {
-					subtitleReadTimer = setTimeout(reveal, 28);
+			let partIndex = 0;
+			let characterIndex = 0;
+			const revealPart = () => {
+				const part = parts[partIndex];
+				if (stage === 1 && characterIndex === 0 && part === 'He followed the footprints until he reached an abandoned mountain settlement.') {
+					if (audioEnabled) playIntroSounds();
+					else introCuePending = true;
+				}
+				subtitle.textContent = part.slice(0, characterIndex);
+				if (characterIndex < part.length) {
+					characterIndex += 1;
+					subtitleReadTimer = setTimeout(revealPart, 40);
+					return;
+				}
+				const readingPause = Math.max(3000, part.split(/\s+/).length * 350);
+				if (partIndex < parts.length - 1) {
+					subtitleReadTimer = setTimeout(() => {
+						partIndex += 1;
+						characterIndex = 0;
+						revealPart();
+					}, readingPause);
+				} else {
+					subtitleReadTimer = setTimeout(() => {
+						subtitle.textContent = '';
+						subtitleReadTimer = null;
+					}, readingPause);
 				}
 			};
-			reveal();
+			revealPart();
 		}
 
 		function updateChoices(stage, branch) {
@@ -392,4 +477,4 @@ He followed the footprints into the forest.</p>
 		}));
 	</script>
 </body>
-</html>s
+</html>
