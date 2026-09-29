@@ -37,6 +37,7 @@
 			place-items: end center;
 			padding: clamp(24px, 7vh, 64px) 20px;
 			background: #111 url('photo_6188188244881642455_y.jpg') center / cover no-repeat;
+			cursor: pointer;
 			opacity: 1;
 			transition: opacity 900ms ease, visibility 0s linear 900ms;
 		}
@@ -48,6 +49,57 @@
 			pointer-events: none;
 		}
 		.start-screen.is-leaving { opacity: 0; visibility: hidden; }
+		.transition-screen {
+			position: fixed;
+			inset: 0;
+			z-index: 6;
+			display: grid;
+			place-items: center;
+			background: #000;
+			opacity: 1;
+			visibility: visible;
+			transition: opacity 1100ms ease, visibility 0s linear 1100ms;
+		}
+		.transition-screen.is-leaving { opacity: 0; visibility: hidden; }
+		.transition-screen[hidden] { display: none; }
+		.transition-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+		.transition-screen.impact-hit { animation: impact-shake 650ms ease-out; }
+		.transition-screen.impact-hit::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			background: radial-gradient(circle at center, rgba(255,255,255,0.85), rgba(255,255,255,0.18) 18%, transparent 58%);
+			animation: impact-flash 800ms ease-out forwards;
+		}
+		@keyframes impact-shake {
+			0%, 100% { transform: translate(0, 0); }
+			15% { transform: translate(-10px, 4px); }
+			30% { transform: translate(8px, -3px); }
+			48% { transform: translate(-5px, 2px); }
+			68% { transform: translate(3px, -1px); }
+		}
+		@keyframes impact-flash {
+			0% { opacity: 0; }
+			14% { opacity: 1; }
+			100% { opacity: 0; }
+		}
+		.start-prompt {
+			position: relative;
+			z-index: 1;
+			margin: 0;
+			padding: 12px 18px;
+			background: transparent;
+			color: #fff4d5;
+			font-size: 13px;
+			letter-spacing: 0.16em;
+			text-shadow: 0 1px 8px #000;
+			text-align: center;
+			text-transform: uppercase;
+			pointer-events: none;
+			animation: prompt-glow 2.4s ease-in-out infinite;
+		}
+		@keyframes prompt-glow { 50% { opacity: 0.58; } }
 		.player {
 			position: relative;
 			z-index: 1;
@@ -193,7 +245,13 @@
 </head>
 <body>
 	<div id="bg" aria-hidden="true"></div>
-	<section id="start-screen" class="start-screen" aria-label="The Remnant title screen">
+	<section id="start-screen" class="start-screen" role="button" tabindex="0" aria-label="Click anywhere to start The Remnant">
+		<p class="start-prompt">Click to begin</p>
+	</section>
+	<section id="transition-screen" class="transition-screen" aria-label="Opening transition" hidden>
+		<video id="transition-video" class="transition-video" playsinline preload="auto">
+			<source src="631456de-513e-461a-942c-cf23204294d1.mp4" type="video/mp4">
+		</video>
 	</section>
 	<main class="player" aria-label="Interactive video">
 		<section class="video">
@@ -215,11 +273,15 @@
 		const subtitle = document.getElementById('subtitle');
 		const player = document.querySelector('.player');
 		const startScreen = document.getElementById('start-screen');
+		const transitionScreen = document.getElementById('transition-screen');
+		const transitionVideo = document.getElementById('transition-video');
+		const startPrompt = document.querySelector('.start-prompt');
 		const introSounds = [
 			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
 			new Audio('dragon-studio-wolf-howl-2-359870.mp3')
 		];
 		const subtitleSounds = {
+			transitionImpact: new Audio('soumages-iron-smash-with-debris-351841.mp3'),
 			house: new Audio('dragon-studio-creaking-401724.mp3'),
 			footsteps: new Audio('freesound_community-footsteps-stairs-slow-106711.mp3'),
 			churchBell: new Audio('universfield-church-bell-toll-156464.mp3'),
@@ -256,7 +318,7 @@
 			endingCollapse: new Audio('themediaguy-earthquake-rumble-amp-cracking-379298.mp3')
 		};
 		const subtitleSoundCues = {
-			house: { line: 'Adrian entered the abandoned house.', stage: 2, good: true },
+			house: { line: 'Adrian entered the abandoned house', stage: 2, good: true },
 			footsteps: { line: 'Suddenly, Adrian heard footsteps behind him.', stage: 2, good: true },
 			churchBell: { line: 'Adrian entered the church.', stage: 2, good: false },
 			churchCry: { line: 'Then he heard Lyra crying beneath the church.', stage: 2, good: false },
@@ -305,7 +367,8 @@
 			});
 		}
 
-		function playIntroSounds() {
+		async function playIntroSounds() {
+			if (audioUnlockPromise) await audioUnlockPromise;
 			introSounds.forEach(sound => {
 				sound.currentTime = 0;
 			});
@@ -314,12 +377,11 @@
 			});
 		}
 
-		let audioUnlockStarted = false;
-		async function unlockAudio() {
-			if (audioUnlockStarted) return;
-			audioUnlockStarted = true;
+		let audioUnlockPromise = null;
+		function unlockAudio() {
+			if (audioUnlockPromise) return audioUnlockPromise;
 			const sounds = [...introSounds, ...Object.values(subtitleSounds)];
-			await Promise.all(sounds.map(async sound => {
+			audioUnlockPromise = Promise.all(sounds.map(async sound => {
 				sound.muted = true;
 				try {
 					await sound.play();
@@ -331,6 +393,7 @@
 					sound.muted = false;
 				}
 			}));
+			return audioUnlockPromise;
 		}
 
 		function stopSubtitleSounds() {
@@ -557,23 +620,65 @@
 		}
 
 		currentStage = 1;
-		document.addEventListener('pointerdown', unlockAudio, { once: true });
-		document.addEventListener('keydown', unlockAudio, { once: true });
-		window.setTimeout(() => {
+		let hasStarted = false;
+		let impactStarted = false;
+		let introStarted = false;
+		async function startIntro() {
+			if (introStarted) return;
+			introStarted = true;
+			await unlockAudio();
 			setScene(currentStage, true);
 			player.classList.add('is-active');
-			startScreen.classList.add('is-leaving');
+			transitionScreen.classList.add('is-leaving');
 			updateSubtitle(currentStage, true);
 			updateChoices(currentStage, true);
 			restartTimer();
 			scheduleAutoDecision();
+			window.setTimeout(() => { transitionScreen.hidden = true; }, 1150);
+		}
+		function startImpactThenIntro() {
+			if (impactStarted) return;
+			impactStarted = true;
+			transitionScreen.classList.add('impact-hit');
+			const impactSound = subtitleSounds.transitionImpact;
+			impactSound.currentTime = 0;
+			impactSound.play().catch(error => {
+				console.warn('Transition impact playback failed', error);
+			});
+			window.setTimeout(startIntro, 850);
+		}
+		async function startStory() {
+			if (hasStarted) return;
+			hasStarted = true;
+			startScreen.style.cursor = 'progress';
+			startPrompt.textContent = 'Opening...';
+			unlockAudio();
+			startScreen.classList.add('is-leaving');
+			transitionScreen.hidden = false;
+			transitionVideo.currentTime = 0;
+			transitionVideo.play().catch(error => {
+				console.warn('Opening transition playback failed', error);
+				startIntro();
+			});
 			window.setTimeout(() => { startScreen.hidden = true; }, 950);
-		}, 10000);
+		}
+		transitionVideo.addEventListener('ended', startImpactThenIntro);
+		transitionVideo.addEventListener('error', startImpactThenIntro);
+		startScreen.addEventListener('click', startStory);
+		startScreen.addEventListener('keydown', event => {
+			if (event.key === 'Enter' || event.key === ' ') {
+				event.preventDefault();
+				startStory();
+			}
+		});
 
-		buttons.forEach((button, buttonIndex) => button.addEventListener('click', () => {
+		buttons.forEach((button, buttonIndex) => button.addEventListener('click', async () => {
+			buttons.forEach(option => { option.disabled = true; });
 			if (autoDecisionTimer) {
 				clearTimeout(autoDecisionTimer);
 			}
+			await unlockAudio();
+			buttons.forEach(option => { option.disabled = false; });
 			chooseOption(buttonIndex, false);
 		}));
 	</script>
