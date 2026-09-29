@@ -90,6 +90,8 @@
 			margin: 0 auto;
 			pointer-events: auto;
 		}
+		#sound-start { display: block; width: min(100%, 460px); min-height: 48px; margin: 0 auto; }
+		#sound-start[hidden], .choices[hidden], .timer[hidden] { display: none; }
 		.choices { display: flex; justify-content: space-between; gap: 18%; }
 		button { position: relative; z-index: 2; flex: 1; min-height: 40px; border: 1px solid #c6b98e; border-radius: 5px; color: white; background: #252431ed; font: 700 15px Arial,sans-serif; cursor: pointer; }
 		button:hover, button:focus-visible, button.chosen { background: #716b82; outline: 2px solid #eee0a6; }
@@ -194,8 +196,9 @@ Then Adrian heard Lyra crying.
 
 He ran toward the sound.</p>
 				<div class="choice-wrap">
-					<div class="choices"><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
-					<div class="timer" aria-label="95 second timer">
+					<button id="sound-start" type="button">Start with sound</button>
+					<div class="choices" hidden><button type="button">Enter the abandoned house</button><button type="button">Go toward the church</button></div>
+					<div class="timer" aria-label="95 second timer" hidden>
 						<span class="timer-fill"></span>
 					</div>
 				</div>
@@ -206,6 +209,9 @@ He ran toward the sound.</p>
 		const buttons = document.querySelectorAll('.choices button');
 		const bg = document.getElementById('bg');
 		const subtitle = document.getElementById('subtitle');
+		const soundStartButton = document.getElementById('sound-start');
+		const choicesElement = document.querySelector('.choices');
+		const timerElement = document.querySelector('.timer');
 		const introSounds = [
 			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
 			new Audio('dragon-studio-wolf-howl-2-359870.mp3')
@@ -300,7 +306,25 @@ He ran toward the sound.</p>
 			introSounds.forEach(sound => {
 				sound.currentTime = 0;
 			});
-			Promise.all(introSounds.map(sound => sound.play())).catch(() => {});
+			Promise.all(introSounds.map(sound => sound.play())).catch(error => {
+				console.warn('Intro audio playback failed', error);
+			});
+		}
+
+		async function unlockAudio() {
+			const sounds = [...introSounds, ...Object.values(subtitleSounds)];
+			await Promise.all(sounds.map(async sound => {
+				sound.muted = true;
+				try {
+					await sound.play();
+					sound.pause();
+					sound.currentTime = 0;
+				} catch (error) {
+					console.warn(`Audio could not be unlocked: ${sound.src}`, error);
+				} finally {
+					sound.muted = false;
+				}
+			}));
 		}
 
 		function stopSubtitleSounds() {
@@ -312,7 +336,9 @@ He ran toward the sound.</p>
 
 		function playSubtitleSound(sound) {
 			sound.currentTime = 0;
-			sound.play().catch(() => {});
+			sound.play().catch(error => {
+				console.warn(`Subtitle audio playback failed: ${sound.src}`, error);
+			});
 		}
 
 		const sceneMap = {
@@ -525,10 +551,20 @@ He ran toward the sound.</p>
 		}
 
 		currentStage = 1;
-		setScene(currentStage, true);
-		updateSubtitle(currentStage, true);
-		updateChoices(currentStage, true);
-		scheduleAutoDecision();
+		soundStartButton.addEventListener('click', async () => {
+			soundStartButton.disabled = true;
+			soundStartButton.textContent = 'Enabling sound...';
+			await unlockAudio();
+			document.body.classList.add('sound-enabled');
+			soundStartButton.hidden = true;
+			choicesElement.hidden = false;
+			timerElement.hidden = false;
+			setScene(currentStage, true);
+			updateSubtitle(currentStage, true);
+			updateChoices(currentStage, true);
+			restartTimer();
+			scheduleAutoDecision();
+		});
 
 		buttons.forEach((button, buttonIndex) => button.addEventListener('click', () => {
 			if (autoDecisionTimer) {
