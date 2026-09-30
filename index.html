@@ -329,6 +329,19 @@
 		const stageTenBadMusic = new Audio('document_6188138130743240698.mp3');
 		const stageElevenGoodMusic = new Audio('document_6188138130743240644.mp3');
 		const stageElevenBadMusic = new Audio('document_6188138130743240647.mp3');
+		const stageMusic = {
+			2: { good: stageTwoGoodMusic, bad: stageTwoBadMusic },
+			3: { good: stageThreeGoodMusic, bad: stageThreeBadMusic },
+			4: { good: stageFourGoodMusic, bad: stageFourBadMusic },
+			5: { good: stageFiveGoodMusic, bad: stageFiveBadMusic },
+			6: { good: stageSixGoodMusic, bad: stageSixBadMusic },
+			7: { good: stageSevenGoodMusic, bad: stageSevenBadMusic },
+			8: { good: stageEightGoodMusic, bad: stageEightBadMusic },
+			9: { good: stageNineGoodMusic, bad: stageNineBadMusic },
+			10: { good: stageTenGoodMusic, bad: stageTenBadMusic },
+			11: { good: stageElevenGoodMusic, bad: stageElevenBadMusic }
+		};
+		const stageMusicTracks = Object.values(stageMusic).flatMap(tracks => Object.values(tracks));
 		const subtitleSounds = {
 			house: new Audio('dragon-studio-creaking-401724.mp3'),
 			footsteps: new Audio('freesound_community-footsteps-stairs-slow-106711.mp3'),
@@ -404,44 +417,10 @@
 		introSounds[0].volume = 0.65;
 		introSounds[1].volume = 0.35;
 		openingIntroAudio.volume = 0.65;
-		stageTwoGoodMusic.loop = true;
-		stageTwoGoodMusic.volume = 0.4;
-		stageTwoBadMusic.loop = true;
-		stageTwoBadMusic.volume = 0.4;
-		stageThreeGoodMusic.loop = true;
-		stageThreeGoodMusic.volume = 0.4;
-		stageThreeBadMusic.loop = true;
-		stageThreeBadMusic.volume = 0.4;
-		stageFourGoodMusic.loop = true;
-		stageFourGoodMusic.volume = 0.4;
-		stageFourBadMusic.loop = true;
-		stageFourBadMusic.volume = 0.4;
-		stageFiveBadMusic.loop = true;
-		stageFiveBadMusic.volume = 0.4;
-		stageSixGoodMusic.loop = true;
-		stageSixGoodMusic.volume = 0.4;
-		stageSixBadMusic.loop = true;
-		stageSixBadMusic.volume = 0.4;
-		stageSevenGoodMusic.loop = true;
-		stageSevenGoodMusic.volume = 0.4;
-		stageSevenBadMusic.loop = true;
-		stageSevenBadMusic.volume = 0.4;
-		stageEightGoodMusic.loop = true;
-		stageEightGoodMusic.volume = 0.4;
-		stageEightBadMusic.loop = true;
-		stageEightBadMusic.volume = 0.4;
-		stageNineGoodMusic.loop = true;
-		stageNineGoodMusic.volume = 0.4;
-		stageNineBadMusic.loop = true;
-		stageNineBadMusic.volume = 0.4;
-		stageTenGoodMusic.loop = true;
-		stageTenGoodMusic.volume = 0.4;
-		stageTenBadMusic.loop = true;
-		stageTenBadMusic.volume = 0.4;
-		stageElevenGoodMusic.loop = true;
-		stageElevenGoodMusic.volume = 0.4;
-		stageElevenBadMusic.loop = true;
-		stageElevenBadMusic.volume = 0.4;
+		stageMusicTracks.forEach(track => {
+			track.loop = true;
+			track.volume = 0.4;
+		});
 		let currentStage = 1;
 		let autoDecisionTimer = null;
 		let subtitleReadTimer = null;
@@ -469,7 +448,7 @@
 		let audioUnlockPromise = null;
 		function unlockAudio() {
 			if (audioUnlockPromise) return audioUnlockPromise;
-			const sounds = [...introSounds, openingIntroAudio, stageTwoGoodMusic, stageTwoBadMusic, stageThreeGoodMusic, ...Object.values(subtitleSounds)];
+			const sounds = [...introSounds, openingIntroAudio, ...stageMusicTracks, ...Object.values(subtitleSounds)];
 			audioUnlockPromise = Promise.all(sounds.map(async sound => {
 				sound.muted = true;
 				try {
@@ -645,32 +624,15 @@
 			if (!subtitle) return;
 			stopIntroSounds();
 			stopSubtitleSounds();
-			if (stage === 2 && isGoodNews) {
-				stageTwoGoodMusic.currentTime = 0;
-				stageTwoGoodMusic.play().catch(error => {
-					console.warn(`Scene background music playback failed: ${stageTwoGoodMusic.src}`, error);
+			stageMusicTracks.forEach(track => {
+				track.pause();
+				track.currentTime = 0;
+			});
+			const selectedMusic = stageMusic[stage]?.[isGoodNews ? 'good' : 'bad'];
+			if (selectedMusic) {
+				selectedMusic.play().catch(error => {
+					console.warn(`Scene background music playback failed: ${selectedMusic.src}`, error);
 				});
-			} else {
-				stageTwoGoodMusic.pause();
-				stageTwoGoodMusic.currentTime = 0;
-			}
-			if (stage === 2 && !isGoodNews) {
-				stageTwoBadMusic.currentTime = 0;
-				stageTwoBadMusic.play().catch(error => {
-					console.warn(`Scene background music playback failed: ${stageTwoBadMusic.src}`, error);
-				});
-			} else {
-				stageTwoBadMusic.pause();
-				stageTwoBadMusic.currentTime = 0;
-			}
-			if (stage === 3 && isGoodNews) {
-				stageThreeGoodMusic.currentTime = 0;
-				stageThreeGoodMusic.play().catch(error => {
-					console.warn(`Scene background music playback failed: ${stageThreeGoodMusic.src}`, error);
-				});
-			} else {
-				stageThreeGoodMusic.pause();
-				stageThreeGoodMusic.currentTime = 0;
 			}
 			const data = subtitleMap[stage];
 			if (!data) return;
