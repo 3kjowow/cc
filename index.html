@@ -348,7 +348,8 @@
 		const startPrompt = document.querySelector('.start-prompt');
 		const introSounds = [
 			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
-			new Audio('dragon-studio-wolf-howl-2-359870.mp3')
+			new Audio('dragon-studio-wolf-howl-2-359870.mp3'),
+			new Audio('document_6188138130743240640.mp4')
 		];
 		const subtitleSounds = {
 			transitionImpact: new Audio('soumages-iron-smash-with-debris-351841.mp3'),
@@ -425,6 +426,7 @@
 		};
 		introSounds[0].volume = 0.65;
 		introSounds[1].volume = 0.35;
+		introSounds[2].volume = 0.65;
 		let currentStage = 1;
 		let autoDecisionTimer = null;
 		let subtitleReadTimer = null;
