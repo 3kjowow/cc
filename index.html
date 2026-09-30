@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Choose One</title>
+	<title>Group 5</title>
 	<style>
 		* { box-sizing: border-box; }
 		body {
@@ -63,49 +63,6 @@
 		.transition-screen.is-leaving { opacity: 0; visibility: hidden; }
 		.transition-screen[hidden] { display: none; }
 		.transition-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
-		.transition-title {
-			position: absolute;
-			inset: 0;
-			z-index: 2;
-			display: grid;
-			place-items: center;
-			margin: 0;
-			padding: 24px;
-			background: rgba(0, 0, 0, 0.34);
-			color: #c32035;
-			font-family: Georgia, 'Times New Roman', serif;
-			font-size: 72px;
-			font-style: italic;
-			text-align: center;
-			text-shadow: 0 3px 20px rgba(0, 0, 0, 0.9), 0 0 28px rgba(195, 32, 53, 0.45);
-			opacity: 0;
-			transition: opacity 900ms ease;
-			pointer-events: none;
-		}
-		.transition-title.is-visible { opacity: 1; }
-		.transition-title.is-leaving { opacity: 0; transition: opacity 5000ms ease; }
-		@media (max-width: 700px) { .transition-title { font-size: 48px; } }
-		.transition-screen.impact-hit { animation: impact-shake 650ms ease-out; }
-		.transition-screen.impact-hit::after {
-			content: '';
-			position: absolute;
-			inset: 0;
-			pointer-events: none;
-			background: radial-gradient(circle at center, rgba(255,255,255,0.85), rgba(255,255,255,0.18) 18%, transparent 58%);
-			animation: impact-flash 800ms ease-out forwards;
-		}
-		@keyframes impact-shake {
-			0%, 100% { transform: translate(0, 0); }
-			15% { transform: translate(-10px, 4px); }
-			30% { transform: translate(8px, -3px); }
-			48% { transform: translate(-5px, 2px); }
-			68% { transform: translate(3px, -1px); }
-		}
-		@keyframes impact-flash {
-			0% { opacity: 0; }
-			14% { opacity: 1; }
-			100% { opacity: 0; }
-		}
 		.start-prompt {
 			position: relative;
 			z-index: 1;
@@ -309,9 +266,8 @@
 	</section>
 	<section id="transition-screen" class="transition-screen" aria-label="Opening transition" hidden>
 		<video id="transition-video" class="transition-video" playsinline preload="auto">
-			<source src="631456de-513e-461a-942c-cf23204294d1.mp4" type="video/mp4">
+			<source src="d15207e5-d2b6-40a7-a2c7-0f5df68b8766.mp4" type="video/mp4">
 		</video>
-		<p id="transition-title" class="transition-title" aria-hidden="true">The Remnant</p>
 	</section>
 	<main class="player" aria-label="Interactive video">
 		<section class="video">
@@ -343,16 +299,34 @@
 		const startScreen = document.getElementById('start-screen');
 		const transitionScreen = document.getElementById('transition-screen');
 		const transitionVideo = document.getElementById('transition-video');
-		const transitionTitle = document.getElementById('transition-title');
 		const reflectionScreen = document.getElementById('reflection-screen');
 		const startPrompt = document.querySelector('.start-prompt');
 		const introSounds = [
 			new Audio('dragon-studio-footsteps-in-snow-335510.mp3'),
 			new Audio('dragon-studio-wolf-howl-2-359870.mp3'),
-			new Audio('document_6188138130743240640.mp4')
 		];
+		const openingIntroAudio = new Audio('document_6188138130743240640.mp3');
+		const stageTwoGoodMusic = new Audio('document_6188138130743240664.mp3');
+		const stageTwoBadMusic = new Audio('document_6188138130743240660.mp3');
+		const stageThreeGoodMusic = new Audio('document_6188138130743240656.mp3');
+		const stageThreeBadMusic = new Audio('document_6188138130743240648.mp3');
+		const stageFourGoodMusic = new Audio('document_6188138130743240667.mp3');
+		const stageFourBadMusic = new Audio('document_6188138130743240669.mp3');
+		const stageFiveGoodMusic = new Audio('document_6188138130743240672.mp3');
+		const stageFiveBadMusic = new Audio('document_6188138130743240673.mp3');
+		const stageSixGoodMusic = new Audio('document_6188138130743240674.mp3');
+		const stageSixBadMusic = new Audio('document_6188138130743240677.mp3');
+		const stageSevenGoodMusic = new Audio('document_6188138130743240679.mp3');
+		const stageSevenBadMusic = new Audio('document_6188138130743240682.mp3');
+		const stageEightGoodMusic = new Audio('document_6190389930556924086.mp3');
+		const stageEightBadMusic = new Audio('document_6188138130743240691.mp3');
+		const stageNineGoodMusic = new Audio('document_6188138130743240692.mp3');
+		const stageNineBadMusic = new Audio('document_6188138130743240695.mp3');
+		const stageTenGoodMusic = new Audio('document_6188138130743240696.mp3');
+		const stageTenBadMusic = new Audio('document_6188138130743240698.mp3');
+		const stageElevenGoodMusic = new Audio('document_6188138130743240644.mp3');
+		const stageElevenBadMusic = new Audio('document_6188138130743240647.mp3');
 		const subtitleSounds = {
-			transitionImpact: new Audio('soumages-iron-smash-with-debris-351841.mp3'),
 			house: new Audio('dragon-studio-creaking-401724.mp3'),
 			footsteps: new Audio('freesound_community-footsteps-stairs-slow-106711.mp3'),
 			churchBell: new Audio('universfield-church-bell-toll-156464.mp3'),
@@ -426,10 +400,46 @@
 		};
 		introSounds[0].volume = 0.65;
 		introSounds[1].volume = 0.35;
-		introSounds[2].volume = 0.65;
+		openingIntroAudio.volume = 0.65;
+		stageTwoGoodMusic.loop = true;
+		stageTwoGoodMusic.volume = 0.4;
+		stageTwoBadMusic.loop = true;
+		stageTwoBadMusic.volume = 0.4;
+		stageThreeGoodMusic.loop = true;
+		stageThreeGoodMusic.volume = 0.4;
+		stageThreeBadMusic.loop = true;
+		stageThreeBadMusic.volume = 0.4;
+		stageFourGoodMusic.loop = true;
+		stageFourGoodMusic.volume = 0.4;
+		stageFourBadMusic.loop = true;
+		stageFourBadMusic.volume = 0.4;
+		stageFiveBadMusic.loop = true;
+		stageFiveBadMusic.volume = 0.4;
+		stageSixGoodMusic.loop = true;
+		stageSixGoodMusic.volume = 0.4;
+		stageSixBadMusic.loop = true;
+		stageSixBadMusic.volume = 0.4;
+		stageSevenGoodMusic.loop = true;
+		stageSevenGoodMusic.volume = 0.4;
+		stageSevenBadMusic.loop = true;
+		stageSevenBadMusic.volume = 0.4;
+		stageEightGoodMusic.loop = true;
+		stageEightGoodMusic.volume = 0.4;
+		stageEightBadMusic.loop = true;
+		stageEightBadMusic.volume = 0.4;
+		stageNineGoodMusic.loop = true;
+		stageNineGoodMusic.volume = 0.4;
+		stageNineBadMusic.loop = true;
+		stageNineBadMusic.volume = 0.4;
+		stageTenGoodMusic.loop = true;
+		stageTenGoodMusic.volume = 0.4;
+		stageTenBadMusic.loop = true;
+		stageTenBadMusic.volume = 0.4;
+		stageElevenGoodMusic.loop = true;
+		stageElevenGoodMusic.volume = 0.4;
+		stageElevenBadMusic.loop = true;
+		stageElevenBadMusic.volume = 0.4;
 		let currentStage = 1;
-		let autoDecisionTimer = null;
-		let subtitleReadTimer = null;
 		const AUTO_DECISION_DELAY = 95000;
 
 		function stopIntroSounds() {
@@ -437,6 +447,8 @@
 				sound.pause();
 				sound.currentTime = 0;
 			});
+			openingIntroAudio.pause();
+			openingIntroAudio.currentTime = 0;
 		}
 
 		async function playIntroSounds() {
@@ -452,7 +464,7 @@
 		let audioUnlockPromise = null;
 		function unlockAudio() {
 			if (audioUnlockPromise) return audioUnlockPromise;
-			const sounds = [...introSounds, ...Object.values(subtitleSounds)];
+			const sounds = [...introSounds, openingIntroAudio, stageTwoGoodMusic, stageTwoBadMusic, stageThreeGoodMusic, ...Object.values(subtitleSounds)];
 			audioUnlockPromise = Promise.all(sounds.map(async sound => {
 				sound.muted = true;
 				try {
@@ -628,6 +640,33 @@
 			if (!subtitle) return;
 			stopIntroSounds();
 			stopSubtitleSounds();
+			if (stage === 2 && isGoodNews) {
+				stageTwoGoodMusic.currentTime = 0;
+				stageTwoGoodMusic.play().catch(error => {
+					console.warn(`Scene background music playback failed: ${stageTwoGoodMusic.src}`, error);
+				});
+			} else {
+				stageTwoGoodMusic.pause();
+				stageTwoGoodMusic.currentTime = 0;
+			}
+			if (stage === 2 && !isGoodNews) {
+				stageTwoBadMusic.currentTime = 0;
+				stageTwoBadMusic.play().catch(error => {
+					console.warn(`Scene background music playback failed: ${stageTwoBadMusic.src}`, error);
+				});
+			} else {
+				stageTwoBadMusic.pause();
+				stageTwoBadMusic.currentTime = 0;
+			}
+			if (stage === 3 && isGoodNews) {
+				stageThreeGoodMusic.currentTime = 0;
+				stageThreeGoodMusic.play().catch(error => {
+					console.warn(`Scene background music playback failed: ${stageThreeGoodMusic.src}`, error);
+				});
+			} else {
+				stageThreeGoodMusic.pause();
+				stageThreeGoodMusic.currentTime = 0;
+			}
 			const data = subtitleMap[stage];
 			if (!data) return;
 			const parts = (stage === 1 ? data.text : (isGoodNews ? data.good : data.bad))
@@ -715,7 +754,7 @@
 
 		currentStage = 1;
 		let hasStarted = false;
-		let impactStarted = false;
+		let introTransitionStarted = false;
 		let introStarted = false;
 		async function startIntro() {
 			if (introStarted) return;
@@ -725,28 +764,20 @@
 			player.classList.add('is-active');
 			transitionScreen.classList.add('is-leaving');
 			updateSubtitle(currentStage, true);
+			openingIntroAudio.currentTime = 0;
+			openingIntroAudio.play().catch(error => {
+				console.warn(`Intro audio playback failed: ${openingIntroAudio.src}`, error);
+			});
 			updateChoices(currentStage, true);
 			restartTimer();
 			scheduleAutoDecision();
 			window.setTimeout(() => { transitionScreen.hidden = true; }, 1150);
 		}
-		function startImpactThenIntro() {
-			if (impactStarted) return;
-			impactStarted = true;
-			transitionScreen.classList.add('impact-hit');
-			const impactSound = subtitleSounds.transitionImpact;
-			impactSound.currentTime = 0;
-			impactSound.play().catch(error => {
-				console.warn('Transition impact playback failed', error);
-			});
-			window.setTimeout(() => {
-				transitionScreen.classList.remove('impact-hit');
-				transitionTitle.classList.add('is-visible');
-			}, 700);
-			window.setTimeout(() => {
-				transitionTitle.classList.add('is-leaving');
-				window.setTimeout(startIntro, 5000);
-			}, 3000);
+		function startIntroAfterTransitionFade() {
+			if (introTransitionStarted) return;
+			introTransitionStarted = true;
+			transitionScreen.classList.add('is-leaving');
+			window.setTimeout(startIntro, 1100);
 		}
 		async function startStory() {
 			if (hasStarted) return;
@@ -759,12 +790,12 @@
 			transitionVideo.currentTime = 0;
 			transitionVideo.play().catch(error => {
 				console.warn('Opening transition playback failed', error);
-				startImpactThenIntro();
+				startIntroAfterTransitionFade();
 			});
 			window.setTimeout(() => { startScreen.hidden = true; }, 950);
 		}
-		transitionVideo.addEventListener('ended', startImpactThenIntro);
-		transitionVideo.addEventListener('error', startImpactThenIntro);
+		transitionVideo.addEventListener('ended', startIntroAfterTransitionFade);
+		transitionVideo.addEventListener('error', startIntroAfterTransitionFade);
 		startScreen.addEventListener('click', startStory);
 		startScreen.addEventListener('keydown', event => {
 			if (event.key === 'Enter' || event.key === ' ') {
